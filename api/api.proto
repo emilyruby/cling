@@ -1,0 +1,27 @@
+// The greeting service definition.
+syntax = "proto3";
+
+service Cling {
+  // Sends a greeting
+  rpc NewPost (Post) returns (PostConfirmation) {}
+  rpc Login (LoginRequest) returns (LoginReply) {}
+}
+
+// The request message containing a new login information.
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+// The request message containing a new post.
+message Post {
+  string content = 2;
+  string title = 3;
+}
+
+message PostConfirmation {
+  string postID = 1;
+}
+
+message LoginReply {
+}
