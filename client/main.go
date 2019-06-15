@@ -5,13 +5,13 @@ import (
 	"log"
 	"time"
 
+	pb "github.com/emilyruby/cling/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	pb "github.com/emilyruby/cling/api"
 )
 
 const (
-	address     = "localhost:50051"
+	address = "localhost:50051"
 )
 
 func login(c pb.ClingClient, ctx context.Context, username, password string) (context.Context, error) {

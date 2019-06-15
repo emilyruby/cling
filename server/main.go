@@ -6,14 +6,14 @@ import (
 	"net"
 	"time"
 
-	"google.golang.org/grpc"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/emilyruby/cling/api"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/codes"
-	"github.com/dgrijalva/jwt-go"
 )
 
 const (
@@ -23,8 +23,8 @@ const (
 var jwtKey = []byte("AllYourBase") // TODO: read this from env
 
 type UserClaims struct {
-    Username string `json:"username"`
-    jwt.StandardClaims
+	Username string `json:"username"`
+	jwt.StandardClaims
 }
 
 type server struct{}
@@ -96,7 +96,7 @@ func (s *server) Login(ctx context.Context, in *api.LoginRequest) (*api.LoginRep
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	md := metadata.Pairs("authorization", "Bearer " + token)
+	md := metadata.Pairs("authorization", "Bearer "+token)
 	err = grpc.SetHeader(ctx, md)
 	if err != nil {
 		return nil, err
@@ -114,9 +114,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer( grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-        grpc_auth.UnaryServerInterceptor(nil),
-    )))
+	s := grpc.NewServer(grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+		grpc_auth.UnaryServerInterceptor(nil),
+	)))
 	api.RegisterClingServer(s, &server{})
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
