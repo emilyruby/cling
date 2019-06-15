@@ -1,21 +1,30 @@
-//go:generate protoc -I ../api --go_out=plugins=grpc:../api ../api/api.proto
-
 package main
 
 import (
 	"context"
 	"log"
-	"os"
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	pb "github.com/emilyruby/cling/api"
 )
 
 const (
 	address     = "localhost:50051"
-	defaultName = "world"
 )
+
+func login(c pb.ClingClient, ctx context.Context, username, password string) (context.Context, error) {
+	var header metadata.MD
+	_, err := c.Login(ctx, &pb.LoginRequest{Username: username, Password: password}, grpc.Header(&header))
+
+	if err != nil {
+		return nil, err
+	}
+
+	md, _ := metadata.FromOutgoingContext(ctx) //TODO: should return some error if not ok
+	return metadata.NewOutgoingContext(ctx, metadata.Join(md, header)), nil
+}
 
 func main() {
 	// Set up a connection to the server.
@@ -24,18 +33,13 @@ func main() {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
+	c := pb.NewClingClient(conn)
 
-	// Contact the server and print out its response.
-	name := defaultName
-	if len(os.Args) > 1 {
-		name = os.Args[1]
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: name})
-	if err != nil {
-		log.Fatalf("could not greet: %v", err)
-	}
-	log.Printf("Greeting: %s", r.Message)
+	ctx, err = login(c, ctx, "test", "this")
+
+	post, err := c.NewPost(ctx, &pb.Post{Content: "hello", Title: "HAHA"})
+
+	log.Println("Greeting: ", post, err)
 }
